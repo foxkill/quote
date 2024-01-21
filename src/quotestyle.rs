@@ -8,24 +8,25 @@ pub enum QuoteStyle {
     Decimal,
     Bond,
     ShortNoteFuture,
+    NoteFuture,
     BondFuture,
 }
 
 impl QuoteStyle {
     pub fn detect(fraction32: &str, delimiter_frac: &str, delimiter32: &str) -> QuoteStyle {
-        if fraction32.contains(".") {
+        if fraction32.contains('.') {
             QuoteStyle::Decimal
-        } else if fraction32.contains("+") {
+        } else if fraction32.contains('+') {
             QuoteStyle::Bond
-        } else if delimiter32.contains("'") && delimiter32.is_empty() {
+        } else if delimiter32.contains('\'') && delimiter32.is_empty() {
             QuoteStyle::BondFuture
-        } else if delimiter32.contains("'") && delimiter32.contains("'") {
-            if fraction32.contains("1") || fraction32.contains("6") || fraction32.contains("8") {
+        } else if delimiter32.contains('\'') && delimiter32.contains('\'') {
+            if fraction32.contains('1') || fraction32.contains('6') || fraction32.contains('8') {
                 return QuoteStyle::ShortNoteFuture  
-            } else if fraction32.contains("2") || fraction32.contains("5") || fraction32.contains("7") {
-                return QuoteStyle::ShortNoteFuture
+            } else if fraction32.contains('2') || fraction32.contains('5') || fraction32.contains('7') {
+                return QuoteStyle::NoteFuture;
             } else {
-                return QuoteStyle::Bond
+                return QuoteStyle::Bond;
             }
         } else {
             QuoteStyle::Bond

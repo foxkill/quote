@@ -7,7 +7,8 @@ use std::str::FromStr;
 use std::collections::HashMap;
 use crate::regex::Regex;
 use crate::quotestyle::QuoteStyle;
-use crate::error::*;
+use crate::error::ParseError;
+use crate::styleparsers::parse_tresury_price;
 
 // type QuoteParser = for<'a, 'b, 'c> fn(&'a str, &'b str, &'c str) -> Result<Quote, ParseError>;
 
@@ -22,27 +23,18 @@ impl PartialEq for Quote {
     }
 }
 impl FromStr for Quote {
-    type Err = Error::InvalidString;
-    fn from_str(s: &str) -> Result<Self> {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, ParseError> {
         Quote::parse(s, QuoteStyle::Detect)
     }
 }
 impl Quote {
-    fn parse_tresury_price(
-        number: &str,
-        fraction: &str,
-        fraction32: &str,
-    ) -> Result<Self, Error> {
-        let price = number.parse::<f64>();
-        Ok(Quote::default())
-    }
-
     fn new() -> Self {
         // .ok_or_else(|| ParseError::InvalidString)
         Quote::default()
     }
 
-    fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self> {
+    fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self, ParseError> {
         if let Ok(price) = s.parse::<f64>() {
             return Ok(Quote { price });
         };
@@ -54,11 +46,11 @@ impl Quote {
             )).unwrap();
 
         let Some(captures) = re.captures(s) else {
-            return Err(Error::InvalidString);
+            return Err(ParseError::InvalidString);
         };
 
         let Some(number) = captures.name("number") else {
-            return Err(Error::InvalidNumber);
+            return Err(ParseError::InvalidNumber);
         };
 
         let delimiter_frac: &str = match captures.name("delimiter_frac") {
@@ -83,8 +75,10 @@ impl Quote {
         } else {
             quotestyle
         } {
-            QuoteStyle::Bond => Quote::parse_tresury_price(number.as_str(), fraction, fraction32),
-            _ => Err(Error::UnexpectedToken),
+            QuoteStyle::Bond => Ok(Quote {
+                 price: parse_tresury_price(number.as_str(), fraction, fraction32).unwrap(),
+            }),
+            _ => Err(ParseError::UnexpectedToken),
         };
     }
 }
