@@ -1,5 +1,5 @@
 //
-// QuoteStyle
+//!crate:quotestyle
 //
 
 #[derive(Debug, PartialEq)]
