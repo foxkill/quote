@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use crate::regex::Regex;
 use crate::quotestyle::QuoteStyle;
 use crate::error::ParseError;
-use crate::styleparsers::parse_tresury_price;
+use crate::styleparsers::{parse_treasury_price, parse_short_term_note_future_price};
 
 // type QuoteParser = for<'a, 'b, 'c> fn(&'a str, &'b str, &'c str) -> Result<Quote, ParseError>;
 
@@ -76,7 +76,10 @@ impl Quote {
             quotestyle
         } {
             QuoteStyle::Bond => Ok(Quote {
-                 price: parse_tresury_price(number.as_str(), fraction, fraction32).unwrap(),
+                 price: parse_treasury_price(number.as_str(), fraction, fraction32).unwrap(),
+            }),
+            QuoteStyle::ShortNoteFuture => Ok(Quote {
+                price: parse_short_term_note_future_price(number.as_str(), fraction, fraction32).unwrap(),
             }),
             _ => Err(ParseError::UnexpectedToken),
         };

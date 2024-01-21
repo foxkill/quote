@@ -18,9 +18,31 @@ lazy_static! {
         map.insert("7", 7.0/8.0);
         map
     };
+
+    static ref FRACTION32_SHORT_TERM_NOTE: HashMap<&'static str, f64> = {
+        let mut map = HashMap::new();
+        map.insert("1", 0.0125);
+        map.insert("2", 0.25);
+        map.insert("3", 0.375);
+        map.insert("5", 0.5);
+        map.insert("+", 0.5);
+        map.insert("6", 0.625);
+        map.insert("7", 0.75);
+        map.insert("8", 0.875);
+        map
+    };
+
+    static ref FRACTION32_LONG_TERM_NOTE: HashMap<&'static str, f64> = {
+        let mut map = HashMap::new();
+        map.insert("0", 0.0);
+        map.insert("1", 0.25);
+        map.insert("2", 0.5);
+        map.insert("3", 0.75);
+        map
+    };
 }
 
-pub fn parse_tresury_price(number: &str, fraction: &str, fraction32: &str) -> Result<f64, ParseError> {
+pub fn parse_treasury_price(number: &str, fraction: &str, fraction32: &str) -> Result<f64, ParseError> {
     let Ok(price) = number.parse::<f64>() else {
         return Err(ParseError::InvalidString);
     };
@@ -34,6 +56,20 @@ pub fn parse_tresury_price(number: &str, fraction: &str, fraction32: &str) -> Re
     Ok(price + ((fraction + fr32)/32.0))
 }
 
+pub fn  parse_short_term_note_future_price(number: &str, fraction: &str, fraction32: &str) -> Result<f64, ParseError> {
+    let Ok(price) = number.parse::<f64>() else {
+        return Err(ParseError::InvalidString);
+    };
+
+    let Ok(fraction) = fraction.parse::<f64>() else {
+        return Err(ParseError::InvalidString);
+    };
+
+    let fr32 = FRACTION32_SHORT_TERM_NOTE.get(fraction32).unwrap_or(&0.0);
+
+    Ok(price + ((fraction + fr32)/32.0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -41,7 +77,14 @@ mod tests {
     #[test]
     fn test_parse_tresury_price() {
         let expected = 103.140625;	
-        let result = parse_tresury_price("103", "04", "+").unwrap();
+        let result = parse_treasury_price("103", "04", "+").unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_short_term_note_future_price() {
+        let expected = 110.35546875;
+        let result = parse_short_term_note_future_price("110", "11", "3").unwrap();
         assert_eq!(result, expected);
     }
 }
