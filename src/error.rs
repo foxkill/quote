@@ -2,7 +2,7 @@
 
 // #![allow(unused)] // for starting project only, remove later.
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParseError {
     InvalidCharacter,
     InvalidNumber,
