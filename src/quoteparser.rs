@@ -1,18 +1,19 @@
 //
 // Quote Parser
 //
+#![allow(unused)] // for starting project only
+
 use std::str::FromStr;
 use std::collections::HashMap;
 use crate::regex::Regex;
 use crate::quotestyle::QuoteStyle;
-use crate::error::ParseError;
+use crate::error::*;
 
 // type QuoteParser = for<'a, 'b, 'c> fn(&'a str, &'b str, &'c str) -> Result<Quote, ParseError>;
 
 #[derive(Debug, Default)]
 struct Quote {
     price: f64,
-    styleparser: HashMap<QuoteStyle, String>,
 }
 
 impl PartialEq for Quote {
@@ -21,37 +22,43 @@ impl PartialEq for Quote {
     }
 }
 impl FromStr for Quote {
-    type Err = ParseError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    type Err = Error::InvalidString;
+    fn from_str(s: &str) -> Result<Self> {
         Quote::parse(s, QuoteStyle::Detect)
     }
 }
 impl Quote {
-    fn parse_tresury_price(number: &str, fraction: &str, fraction32: &str) -> Result<Self, ParseError> {
+    fn parse_tresury_price(
+        number: &str,
+        fraction: &str,
+        fraction32: &str,
+    ) -> Result<Self, Error> {
+        let price = number.parse::<f64>();
         Ok(Quote::default())
     }
 
     fn new() -> Self {
-        let mut styleparser = HashMap::new();
-
-        styleparser.insert(QuoteStyle::Bond, String::from("Bond"));
-
-        Quote { price: 0.0, styleparser }
+        // .ok_or_else(|| ParseError::InvalidString)
+        Quote::default()
     }
-    fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self, ParseError> {
-        if let Ok(result) = s.parse::<f64>() {
-            return Ok(Quote::default());
-        }
 
-        let re = Regex::new(r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?").unwrap();
-
-        let Some(captures) = re.captures(s) else {
-            return Err(ParseError::UnexpectedToken);
+    fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self> {
+        if let Ok(price) = s.parse::<f64>() {
+            return Ok(Quote { price });
         };
 
-        let number: i32 = match captures.name("number") {
-            Some(number_str) => number_str.as_str().parse::<i32>().unwrap(),
-            None => 0,
+        // It's ok if it is not parsable. We'Ll continue to parse it via an regular expression.
+        let re = Regex::new(concat!(
+                r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
+                r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
+            )).unwrap();
+
+        let Some(captures) = re.captures(s) else {
+            return Err(Error::InvalidString);
+        };
+
+        let Some(number) = captures.name("number") else {
+            return Err(Error::InvalidNumber);
         };
 
         let delimiter_frac: &str = match captures.name("delimiter_frac") {
@@ -59,9 +66,9 @@ impl Quote {
             None => "",
         };
 
-        let fraction: i32 = match captures.name("fraction") {
-            Some(fraction_str) => fraction_str.as_str().parse::<i32>().unwrap(),
-            None => 0,
+        let fraction: &str = match captures.name("fraction") {
+            Some(fraction_str) => fraction_str.as_str(),
+            None => "",
         };
 
         let delimiter32 = match captures.name("delimiter32") {
@@ -69,31 +76,19 @@ impl Quote {
             None => "",
         };
 
-        let fraction32: &str = match captures.name("fraction32") {
-            Some(fraction32_str) => fraction32_str.as_str(),
-            None => ""
+        let fraction32: &str = captures.name("fraction32").map_or("", |f| f.as_str());
+
+        return match if quotestyle == QuoteStyle::Detect {
+            QuoteStyle::detect(fraction32, delimiter_frac, delimiter32)
+        } else {
+            quotestyle
+        } {
+            QuoteStyle::Bond => Quote::parse_tresury_price(number.as_str(), fraction, fraction32),
+            _ => Err(Error::UnexpectedToken),
         };
-
-        let style = if quotestyle == QuoteStyle::Detect { QuoteStyle::detect(fraction32, delimiter_frac, delimiter32) } else { quotestyle };
-
-
-        // if style == QuoteStyle::Bond {
-        //     let mut price = _number as f64;
-        //     price += _fraction as f64 / 100.0;
-        //     price += _fraction32.replace(",", ".").parse::<f64>().unwrap() / 100.0;
-        //     return Ok(Quote { price: price });
-        // }
-
-        // if style == QuoteStyle::Stock {
-        //     let mut price = _number as f64;
-        //     price += _fraction as f64 / 100.0;
-        //     price += _fraction32.replace(",", ".").parse::<f64>().unwrap() / 100.0;
-        //     return Ok(Quote { price: price });
-        // }
-
-        return Ok(Quote::default());
     }
 }
+
 
 
 #[cfg(test)]

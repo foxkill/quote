@@ -2,7 +2,7 @@
 // QuoteStyle
 //
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq)]
 pub enum QuoteStyle {
     Detect,
     Decimal,
@@ -33,6 +33,7 @@ impl QuoteStyle {
     }
 }
 
+#[cfg(test)]
 mod tests {
     #[test]
     fn test_detect() {

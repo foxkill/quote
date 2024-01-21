@@ -1,6 +1,7 @@
-//
-// error.rs
-//
+//!crate error
+
+// #![allow(unused)] // for starting project only, remove later.
+
 #[derive(Debug)]
 pub enum ParseError {
     InvalidCharacter,
