@@ -13,15 +13,12 @@ use crate::styleparsers::{
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::str::FromStr;
-// macro_rules! concat {
-//         ($($e:expr),* $(,)?) => {{ /* compiler built-in */ }};
-//     }
-// use lazy_regex::regex; Consider lazy regex insted of lazy_static?
 
+// consider using lazy_regex::regex; Consider lazy regex insted of lazy_static?
 
 macro_rules! extract_capture {
-    ($caps:expr, $name:ident) => {
-        let $name: &str = $caps.name(stringify!($name)).map_or("", |f| f.as_str());
+    ($caps:expr, $($name:ident), *) => {
+        $(let $name: &str = $caps.name(stringify!($name)).map_or("", |f| f.as_str());)*
     };
 }
 lazy_static! {
@@ -80,35 +77,37 @@ impl Quote {
             return Ok(Quote { price });
         };
 
+        // Guard
         let Some(captures) = QUOTE_EXPRESSION_RE.captures(s) else {
             return Err(ParseError::Quote);
         };
 
-        extract_capture!(captures, number);
-        extract_capture!(captures, delimiter_frac);
-        extract_capture!(captures, fraction);
-        extract_capture!(captures, delimiter32);
-        extract_capture!(captures, fraction32);
+        extract_capture!(
+            captures,
+            number,
+            delimiter_frac,
+            fraction,
+            delimiter32,
+            fraction32
+        );
 
-        match if quotestyle == Style::Detect {
+        let style = if quotestyle == Style::Detect {
             Style::detect(fraction32, delimiter_frac, delimiter32)
         } else {
             quotestyle
-        } {
-            Style::Bond => Ok(Quote {
-                price: parse_treasury_price(number, fraction, fraction32)?,
-            }),
-            Style::BondFuture => Ok(Quote {
-                price: parse_bond_future_price(number, fraction, fraction32)?,
-            }),
-            Style::NoteFuture => Ok(Quote {
-                price: parse_note_future_price(number, fraction, fraction32)?,
-            }),
-            Style::ShortNoteFuture => Ok(Quote {
-                price: parse_short_term_note_future_price(number, fraction, fraction32)?,
-            }),
-            _ => Err(ParseError::Style),
-        }
+        };
+
+        let price = match style {
+            Style::Bond => parse_treasury_price(number, fraction, fraction32),
+            Style::BondFuture => parse_bond_future_price(number, fraction, fraction32),
+            Style::NoteFuture => parse_note_future_price(number, fraction, fraction32),
+            Style::ShortNoteFuture => {
+                parse_short_term_note_future_price(number, fraction, fraction32)
+            }
+            _ => return Err(ParseError::Style),
+        }?;
+
+        Ok(Quote{ price })
     }
 }
 
