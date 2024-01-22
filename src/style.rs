@@ -14,6 +14,7 @@ pub enum QuoteStyle {
 
 impl QuoteStyle {
     pub fn detect(fraction32: &str, delimiter_frac: &str, delimiter32: &str) -> QuoteStyle {
+        let _ = delimiter_frac;
         if fraction32.contains('.') {
             QuoteStyle::Decimal
         } else if fraction32.contains('+') {

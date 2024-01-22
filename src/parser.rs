@@ -1,16 +1,24 @@
 //
 // Quote Parser
 //
-#![allow(unused)] // for starting project only
+#![allow(unused)] // for starting projects only
 
 use std::str::FromStr;
 use std::collections::HashMap;
 use crate::regex::Regex;
-use crate::quotestyle::QuoteStyle;
+use crate::style::QuoteStyle;
 use crate::error::ParseError;
-use crate::styleparsers::{parse_treasury_price, parse_short_term_note_future_price, parse_bond_future_price};
+use crate::styleparsers::{parse_treasury_price, parse_short_term_note_future_price, parse_bond_future_price, parse_note_future_price};
+use lazy_static::lazy_static;
 
 // type QuoteParser = for<'a, 'b, 'c> fn(&'a str, &'b str, &'c str) -> Result<Quote, ParseError>;
+
+lazy_static! {
+    static ref QUOTE_EXPRESSION_RE: Regex = Regex::new(concat!(
+        r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
+        r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
+    )).unwrap();
+}
 
 #[derive(Debug, Default)]
 struct Quote {
@@ -34,18 +42,13 @@ impl Quote {
         Quote::default()
     }
 
-    fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self, ParseError> {
+    /// Try to parse a quote.
+    pub fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self, ParseError> {
         if let Ok(price) = s.parse::<f64>() {
             return Ok(Quote { price });
         };
 
-        // It's ok if it is not parsable. We'Ll continue to parse it via an regular expression.
-        let re = Regex::new(concat!(
-                r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
-                r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
-            )).unwrap();
-
-        let Some(captures) = re.captures(s) else {
+        let Some(captures) = QUOTE_EXPRESSION_RE.captures(s) else {
             return Err(ParseError::InvalidString);
         };
 
@@ -76,15 +79,18 @@ impl Quote {
             quotestyle
         } {
             QuoteStyle::Bond => Ok(Quote {
-                 price: parse_treasury_price(number.as_str(), fraction, fraction32).unwrap(),
+                 price: parse_treasury_price(number.as_str(), fraction, fraction32)?,
             }),
             QuoteStyle::BondFuture => Ok(Quote {
                 price: parse_bond_future_price(number.as_str(), fraction, fraction32).unwrap(),
             }),
+            QuoteStyle::NoteFuture => Ok(Quote {
+                price: parse_note_future_price(number.as_str(), fraction, fraction32).unwrap(),
+            }),
             QuoteStyle::ShortNoteFuture => Ok(Quote {
                 price: parse_short_term_note_future_price(number.as_str(), fraction, fraction32).unwrap(),
             }),
-            _ => Err(ParseError::UnexpectedToken),
+            _ => Err(ParseError::InvalidType),
         };
     }
 }
@@ -93,7 +99,7 @@ impl Quote {
 
 #[cfg(test)]
 mod tests {
-    use crate::quotestyle::QuoteStyle;
+    use crate::{style::QuoteStyle, error::ParseError};
 
     use super::Quote;
 
@@ -117,7 +123,7 @@ mod tests {
 
     #[test]
     fn parse_default_stock_quote_with_comma() {
-        let parsed_price = Quote::parse("104,04", QuoteStyle::Detect);
-        assert_eq!(parsed_price.unwrap().price, 104.04);
+        let result = Quote::parse("104,04", QuoteStyle::Detect);
+        assert_eq!(Err(ParseError::InvalidNumber), result);
     }
 }

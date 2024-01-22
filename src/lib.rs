@@ -1,9 +1,11 @@
 //
-// lib.rs
+//! # Quote Parser
+//! 
+//! The `quoteparser` crate provides a parser for treasury future quotes.
 //
 extern crate regex;
 mod styleparsers;
 mod error;
-pub mod quoteparser;
-pub mod quotestyle;
+pub mod parser;
+pub mod style;
 // mod prelude;
