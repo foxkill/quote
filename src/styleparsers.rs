@@ -53,6 +53,7 @@ lazy_static! {
     );
 }
 
+/// The work horse for parsing
 fn parse_quote(number: &str, fraction: &str, fraction32: &str, m: &FractionMap) -> Result<f64, ParseError> {
     let Ok(price) = number.parse::<f64>() else {
         return Err(ParseError::Number);
@@ -85,7 +86,6 @@ pub fn parse_bond_future_price(number: &str, fraction: &str, fraction32: &str) -
     parse_quote(number, fraction, "0", &FRACTION32_NOTE)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -106,7 +106,9 @@ mod tests {
 
     #[test]
     fn test_parse_note_future_price() {
-        todo!();
+        let expected = 110.3671875;
+        let result = parse_note_future_price("110", "11", "7").unwrap();
+        assert_eq!(result, expected);
     }
 
     #[test]
