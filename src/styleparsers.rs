@@ -53,6 +53,12 @@ lazy_static! {
     );
 }
 
+fn parse_quote2(number: &str, fraction: &str, fraction32: &str, m: &FractionMap) -> Result<f64, ParseError> {
+    let price = number.parse::<f64>().map_err(|_| ParseError::Number)?;
+    let fraction = fraction.parse::<f64>().map_err(|_| ParseError::Number)?;
+    let fr32 = m.get(&fraction32.chars().next().unwrap_or('0')).unwrap_or(&0.0);
+    Ok(price + (fraction + fr32) / 32.0)
+}
 /// The work horse for parsing
 fn parse_quote(number: &str, fraction: &str, fraction32: &str, m: &FractionMap) -> Result<f64, ParseError> {
     let Ok(price) = number.parse::<f64>() else {
@@ -69,6 +75,7 @@ fn parse_quote(number: &str, fraction: &str, fraction32: &str, m: &FractionMap) 
 
     Ok(price + ((fraction + fr32)/32.0))
 }
+
 pub fn parse_treasury_price(number: &str, fraction: &str, fraction32: &str) -> Result<f64, ParseError> {
     parse_quote(number, fraction, fraction32, &FRACTION_BOND)
 }
