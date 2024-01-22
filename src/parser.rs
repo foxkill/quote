@@ -44,16 +44,17 @@ impl Quote {
 
     /// Try to parse a quote.
     pub fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self, ParseError> {
+        // First try if it is just a simple float.
         if let Ok(price) = s.parse::<f64>() {
             return Ok(Quote { price });
         };
 
         let Some(captures) = QUOTE_EXPRESSION_RE.captures(s) else {
-            return Err(ParseError::InvalidString);
+            return Err(ParseError::Quote);
         };
 
         let Some(number) = captures.name("number") else {
-            return Err(ParseError::InvalidNumber);
+            return Err(ParseError::Number);
         };
 
         let delimiter_frac: &str = match captures.name("delimiter_frac") {
@@ -73,7 +74,7 @@ impl Quote {
 
         let fraction32: &str = captures.name("fraction32").map_or("", |f| f.as_str());
 
-        return match if quotestyle == QuoteStyle::Detect {
+        match if quotestyle == QuoteStyle::Detect {
             QuoteStyle::detect(fraction32, delimiter_frac, delimiter32)
         } else {
             quotestyle
@@ -82,16 +83,16 @@ impl Quote {
                  price: parse_treasury_price(number.as_str(), fraction, fraction32)?,
             }),
             QuoteStyle::BondFuture => Ok(Quote {
-                price: parse_bond_future_price(number.as_str(), fraction, fraction32).unwrap(),
+                price: parse_bond_future_price(number.as_str(), fraction, fraction32)?,
             }),
             QuoteStyle::NoteFuture => Ok(Quote {
-                price: parse_note_future_price(number.as_str(), fraction, fraction32).unwrap(),
+                price: parse_note_future_price(number.as_str(), fraction, fraction32)?,
             }),
             QuoteStyle::ShortNoteFuture => Ok(Quote {
-                price: parse_short_term_note_future_price(number.as_str(), fraction, fraction32).unwrap(),
+                price: parse_short_term_note_future_price(number.as_str(), fraction, fraction32)?,
             }),
-            _ => Err(ParseError::InvalidType),
-        };
+            _ => Err(ParseError::Style),
+        }
     }
 }
 
@@ -124,6 +125,6 @@ mod tests {
     #[test]
     fn parse_default_stock_quote_with_comma() {
         let result = Quote::parse("104,04", QuoteStyle::Detect);
-        assert_eq!(Err(ParseError::InvalidNumber), result);
+        assert_eq!(Err(ParseError::Number), result);
     }
 }
