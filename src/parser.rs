@@ -3,21 +3,31 @@
 //
 #![allow(unused)] // for starting projects only
 
-use std::str::FromStr;
-use std::collections::HashMap;
-use crate::regex::Regex;
-use crate::style::QuoteStyle;
 use crate::error::ParseError;
-use crate::styleparsers::{parse_treasury_price, parse_short_term_note_future_price, parse_bond_future_price, parse_note_future_price};
+use crate::regex::Regex;
+use crate::style::Style;
+use crate::styleparsers::{
+    parse_bond_future_price, parse_note_future_price, parse_short_term_note_future_price,
+    parse_treasury_price,
+};
 use lazy_static::lazy_static;
-
-// type QuoteParser = for<'a, 'b, 'c> fn(&'a str, &'b str, &'c str) -> Result<Quote, ParseError>;
-
+use std::collections::HashMap;
+use std::str::FromStr;
+// macro_rules! concat {
+//         ($($e:expr),* $(,)?) => {{ /* compiler built-in */ }};
+//     }
+// use lazy_regex::regex; Consider lazy regex insted of lazy_static?
+macro_rules! cvar {
+    ($s:ident, $caps:expr) => {
+        let $s: &str = $caps.name(stringify!($s)).map_or("", |m| m.as_str());
+    };
+}
 lazy_static! {
     static ref QUOTE_EXPRESSION_RE: Regex = Regex::new(concat!(
         r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
         r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
-    )).unwrap();
+    ))
+    .unwrap();
 }
 
 #[derive(Debug, Default)]
@@ -30,10 +40,29 @@ impl PartialEq for Quote {
         self.price == other.price
     }
 }
+/// Parses a string `s` to return a decimal representation of
+/// the string value.
+///
+/// If parsing succeeds, return the value inside [`Ok`], otherwise
+/// when the string is ill-formatted return an error specific to the
+/// inside [`Err`]. The error type is specific to the implementation of the trait.
+///
+/// # Examples
+///
+/// Basic usage with [`Quote`], a type that implements `FromStr`:
+///
+/// ```
+/// use quote::Quote
+///
+/// let s = "103-04+";
+/// let x = Quote::from_str(s).unwrap();
+///
+/// assert_eq!(103.140625, x);
+/// ```
 impl FromStr for Quote {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, ParseError> {
-        Quote::parse(s, QuoteStyle::Detect)
+        Quote::parse(s, Style::Detect)
     }
 }
 impl Quote {
@@ -43,8 +72,8 @@ impl Quote {
     }
 
     /// Try to parse a quote.
-    pub fn parse(s: &str, quotestyle: QuoteStyle) -> Result<Self, ParseError> {
-        // First try if it is just a simple float.
+    pub fn parse(s: &str, quotestyle: Style) -> Result<Self, ParseError> {
+        // First try parse a simple float.
         if let Ok(price) = s.parse::<f64>() {
             return Ok(Quote { price });
         };
@@ -53,78 +82,73 @@ impl Quote {
             return Err(ParseError::Quote);
         };
 
-        let Some(number) = captures.name("number") else {
-            return Err(ParseError::Number);
-        };
+        cvar!(number, captures);
+        cvar!(delimiter_frac, captures);
+        cvar!(fraction, captures);
+        cvar!(delimiter32, captures);
+        cvar!(fraction32, captures);
 
-        let delimiter_frac: &str = match captures.name("delimiter_frac") {
-            Some(delimiter_frac_str) => delimiter_frac_str.as_str(),
-            None => "",
-        };
-
-        let fraction: &str = match captures.name("fraction") {
-            Some(fraction_str) => fraction_str.as_str(),
-            None => "",
-        };
-
-        let delimiter32 = match captures.name("delimiter32") {
-            Some(delimiter32_str) => delimiter32_str.as_str(),
-            None => "",
-        };
-
-        let fraction32: &str = captures.name("fraction32").map_or("", |f| f.as_str());
-
-        match if quotestyle == QuoteStyle::Detect {
-            QuoteStyle::detect(fraction32, delimiter_frac, delimiter32)
+        match if quotestyle == Style::Detect {
+            Style::detect(fraction32, delimiter_frac, delimiter32)
         } else {
             quotestyle
         } {
-            QuoteStyle::Bond => Ok(Quote {
-                 price: parse_treasury_price(number.as_str(), fraction, fraction32)?,
+            Style::Bond => Ok(Quote {
+                price: parse_treasury_price(number, fraction, fraction32)?,
             }),
-            QuoteStyle::BondFuture => Ok(Quote {
-                price: parse_bond_future_price(number.as_str(), fraction, fraction32)?,
+            Style::BondFuture => Ok(Quote {
+                price: parse_bond_future_price(number, fraction, fraction32)?,
             }),
-            QuoteStyle::NoteFuture => Ok(Quote {
-                price: parse_note_future_price(number.as_str(), fraction, fraction32)?,
+            Style::NoteFuture => Ok(Quote {
+                price: parse_note_future_price(number, fraction, fraction32)?,
             }),
-            QuoteStyle::ShortNoteFuture => Ok(Quote {
-                price: parse_short_term_note_future_price(number.as_str(), fraction, fraction32)?,
+            Style::ShortNoteFuture => Ok(Quote {
+                price: parse_short_term_note_future_price(number, fraction, fraction32)?,
             }),
             _ => Err(ParseError::Style),
         }
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
-    use crate::{style::QuoteStyle, error::ParseError};
+    use std::str::FromStr;
+
+    use crate::{error::ParseError, style::Style};
 
     use super::Quote;
 
     #[test]
     fn parse_decimal() {
-        let parsed_price = Quote::parse("123.45", QuoteStyle::Detect);
-        assert_eq!(parsed_price.unwrap().price, 123.45);
+        let result = Quote::from_str("123.45").unwrap().price;
+        let expected = 123.45;
+        assert_eq!(result, 123.45);
     }
 
     #[test]
     fn parse_unqualified_str() {
-        let parsed_price = Quote::parse("tum4", QuoteStyle::Detect);
+        let parsed_price = Quote::parse("tum4", Style::Detect);
         assert!(parsed_price.is_err());
     }
 
     #[test]
-    fn parse_default_bond_quote() {
-        let parsed_price = Quote::parse("104-04+", QuoteStyle::Detect);
-        assert_eq!(parsed_price.unwrap().price, 104.125);
+    fn parse_bond_quote() {
+        let expected = 103.125;
+        let result = Quote::from_str("103-04").unwrap().price;
+        assert_eq!(result, expected);
     }
 
     #[test]
-    fn parse_default_stock_quote_with_comma() {
-        let result = Quote::parse("104,04", QuoteStyle::Detect);
-        assert_eq!(Err(ParseError::Number), result);
+    fn parse_default_bond_quote() {
+        let expected = 104.140625;
+        let result = Quote::from_str("104-04+").unwrap().price;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_quote_with_comma() {
+        let result = Quote::from_str("104,04");
+        let e = Err(ParseError::Number);
+        assert_eq!(e, result);
     }
 }
