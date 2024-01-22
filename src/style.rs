@@ -1,9 +1,11 @@
-//
+//! #Quote Style
+//!
 //!crate:quotestyle
+//! pub enum Stye - Enum which contains all possible kinds of parsing methods.
 //
 
 #[derive(Debug, PartialEq)]
-pub enum QuoteStyle {
+pub enum Style {
     Detect,
     Decimal,
     Bond,
@@ -12,25 +14,26 @@ pub enum QuoteStyle {
     BondFuture,
 }
 
-impl QuoteStyle {
-    pub fn detect(fraction32: &str, delimiter_frac: &str, delimiter32: &str) -> QuoteStyle {
-        let _ = delimiter_frac;
-        if fraction32.contains('.') {
-            QuoteStyle::Decimal
-        } else if fraction32.contains('+') {
-            QuoteStyle::Bond
-        } else if delimiter32.contains('\'') && delimiter32.is_empty() {
-            QuoteStyle::BondFuture
-        } else if delimiter32.contains('\'') && delimiter32.contains('\'') {
-            if fraction32.contains('1') || fraction32.contains('6') || fraction32.contains('8') {
-                return QuoteStyle::ShortNoteFuture  
-            } else if fraction32.contains('2') || fraction32.contains('5') || fraction32.contains('7') {
-                return QuoteStyle::NoteFuture;
-            } else {
-                return QuoteStyle::Bond;
-            }
-        } else {
-            QuoteStyle::Bond
+impl Style {
+    pub fn detect(fraction32: &str, delimiter_frac: &str, delimiter32: &str) -> Style {
+        match (
+            delimiter_frac.contains('.'),
+            fraction32.contains('+'),
+            delimiter_frac.contains('\''),
+            delimiter32.contains('\''),
+            !delimiter32.is_empty(),
+        ) {
+            (true, _, _, _, _) => Style::Decimal,
+            (_, true, _, _, _) => Style::Bond,
+            (_, _, true, false, _) => Style::BondFuture,
+            (_, _, true, true, true) => match fraction32 {
+                s if s.contains('2') || s.contains('5') || s.contains('7') => Style::NoteFuture,
+                s if s.contains('1') || s.contains('3') || s.contains('6') || s.contains('8') => {
+                    Style::ShortNoteFuture
+                }
+                _ => Style::Bond,
+            },
+            _ => Style::Bond,
         }
     }
 }
@@ -44,11 +47,12 @@ mod tests {
         // ('325', '.', None, QuoteStyle.DECIMAL), # Decimal
         // ('+', '', '', QuoteStyle.BOND), # 108-04+
         // ('2', '\'', '', QuoteStyle.BOND_FUTURE), # 108'182
-        use super::QuoteStyle;
-        assert_eq!(QuoteStyle::detect("", "", ""), QuoteStyle::Bond);
-        assert_eq!(QuoteStyle::detect("325", ".", ""), QuoteStyle::Decimal);
-        assert_eq!(QuoteStyle::detect("+", "", ""), QuoteStyle::Bond);
-        assert_eq!(QuoteStyle::detect("2", "'", ""), QuoteStyle::BondFuture);
-        assert_eq!(QuoteStyle::detect("1", "'", "'"), QuoteStyle::ShortNoteFuture);
+        use super::Style;
+        assert_eq!(Style::detect("", "", ""), Style::Bond);
+        assert_eq!(Style::detect("325", ".", ""), Style::Decimal);
+        assert_eq!(Style::detect("+", "", ""), Style::Bond);
+        assert_eq!(Style::detect("2", "'", ""), Style::BondFuture);
+        assert_eq!(Style::detect("7", "'", "'"), Style::NoteFuture);
+        assert_eq!(Style::detect("8", "'", "'"), Style::ShortNoteFuture);
     }
 }
