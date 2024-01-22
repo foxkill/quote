@@ -4,9 +4,7 @@
 
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
-    InvalidNumber,
-    InvalidString,
-    InvalidSymbol,
-    InvalidType,
-    UnexpectedToken,
+    Quote,
+    Number,
+    Style,
 }
