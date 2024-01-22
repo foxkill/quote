@@ -17,9 +17,11 @@ use std::str::FromStr;
 //         ($($e:expr),* $(,)?) => {{ /* compiler built-in */ }};
 //     }
 // use lazy_regex::regex; Consider lazy regex insted of lazy_static?
-macro_rules! cvar {
-    ($s:ident, $caps:expr) => {
-        let $s: &str = $caps.name(stringify!($s)).map_or("", |m| m.as_str());
+
+
+macro_rules! extract_capture {
+    ($caps:expr, $name:ident) => {
+        let $name: &str = $caps.name(stringify!($name)).map_or("", |f| f.as_str());
     };
 }
 lazy_static! {
@@ -82,11 +84,11 @@ impl Quote {
             return Err(ParseError::Quote);
         };
 
-        cvar!(number, captures);
-        cvar!(delimiter_frac, captures);
-        cvar!(fraction, captures);
-        cvar!(delimiter32, captures);
-        cvar!(fraction32, captures);
+        extract_capture!(captures, number);
+        extract_capture!(captures, delimiter_frac);
+        extract_capture!(captures, fraction);
+        extract_capture!(captures, delimiter32);
+        extract_capture!(captures, fraction32);
 
         match if quotestyle == Style::Detect {
             Style::detect(fraction32, delimiter_frac, delimiter32)
