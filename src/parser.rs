@@ -101,21 +101,21 @@ mod tests {
 
     #[test]
     fn parse_unqualified_str() {
-        let parsed_price = parse("tum4", Style::Detect);
+        let parsed_price = parse("tum4", Style::default());
         assert!(parsed_price.is_err());
     }
 
     #[test]
     fn parse_bond_quote() {
         let expected = 103.125;
-        let result = parse("103-04", Style::Detect).unwrap();
+        let result = parse("103-04", Style::default()).unwrap();
         assert_eq!(result, expected);
     }
 
     #[test]
     fn parse_default_bond_quote() {
         let expected = 104.140625;
-        let result = parse("104-04+", Style::Detect).unwrap();
+        let result = parse("104-04+", Style::default()).unwrap();
         assert_eq!(result, expected);
     }
 
@@ -124,4 +124,21 @@ mod tests {
         let result = parse("104,04", Style::default());
         assert!(matches!(result, Err(ParseError::InvalidNumber)));
     }
+
+    #[test]
+    /// If you want to parse a short term future quote like a price from /ZT
+    /// future, you have to be specific about the parse style.
+    fn it_should_parse_short_term_note_future_quotes() {
+        let expected = 102.578125;
+        let result = parse("102'18'5", Style::ShortNoteFuture).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn it_should_parse_bond_quotes() {
+        let expected = 103.792968750;
+        let result = parse("103-253", Style::default()).unwrap();
+        assert_eq!(result, expected);
+    }
+
 }
