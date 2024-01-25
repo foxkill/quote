@@ -1,13 +1,15 @@
 //! # The Quote Parser
+//! Module that contains the parse() function.
 //
-//
-#![allow(unuse)] // for starting projects only
-
-mod style;
-mod styleparsers;
-
+// #[allow(unused)] // for starting projects only
 use lazy_static::lazy_static;
 use regex::Regex;
+
+mod style;
+mod macros;
+mod styleparsers;
+
+use crate::extract_capture;
 
 // Export Style.
 pub use self::style::Style;
@@ -18,11 +20,7 @@ use crate::error::ParseError;
 
 // consider using lazy_regex::regex; Consider lazy regex insted of lazy_static?
 
-macro_rules! extract_capture {
-    ($caps:expr, $($name:ident), *) => {
-        $(let $name: &str = $caps.name(stringify!($name)).map_or("", |f| f.as_str());)*
-    };
-}
+
 lazy_static! {
     static ref QUOTE_EXPRESSION_RE: Regex = Regex::new(concat!(
         r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
@@ -31,6 +29,28 @@ lazy_static! {
     .unwrap();
 }
 
+/**
+This function allow to parse tresury bond quotes and treasury
+future quotes.
+
+If parsing succeeds, return the value inside [`Ok`], otherwise
+when the string is ill-formatted return an error specific to the
+inside [`Err`]. The error type is specific to the implementation of the trait.
+
+# Examples
+
+Basic usage with [`parse`] that resturn an [`f64`] if successful.
+
+```
+use quote::parser::parse;
+use quote::parser::Style;
+
+let s = "103-04+";
+let x = parse(s, Style::Bond).unwrap();
+
+assert_eq!(103.140625, x);
+```
+*/
 pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
     // First try parse a simple float.
     if let Ok(price) = s.parse::<f64>() {
