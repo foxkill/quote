@@ -1,7 +1,5 @@
 //!crate error
 
-#![allow(unused)] // for starting project only, remove later.
-
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
