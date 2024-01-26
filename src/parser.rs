@@ -20,7 +20,6 @@ use crate::error::ParseError;
 
 // consider using lazy_regex::regex; Consider lazy regex insted of lazy_static?
 
-
 lazy_static! {
     static ref QUOTE_EXPRESSION_RE: Regex = Regex::new(concat!(
         r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
@@ -93,27 +92,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_decimal() {
+    fn it_should_parse_a_decimal_value() {
         let result = parse("123.45", Style::default()).unwrap();
         let expected = 123.45;
         assert_eq!(result, expected);
     }
 
     #[test]
-    fn parse_unqualified_str() {
+    fn it_should_return_an_error_for_an_unqualified_str() {
         let parsed_price = parse("tum4", Style::default());
         assert!(parsed_price.is_err());
     }
 
     #[test]
-    fn parse_bond_quote() {
+    fn it_should_parse_a_bond_quote() {
         let expected = 103.125;
         let result = parse("103-04", Style::default()).unwrap();
         assert_eq!(result, expected);
     }
 
     #[test]
-    fn parse_default_bond_quote() {
+    fn it_should_parse_a_bond_quote_denoted_as_half() {
         let expected = 104.140625;
         let result = parse("104-04+", Style::default()).unwrap();
         assert_eq!(result, expected);
@@ -135,10 +134,23 @@ mod tests {
     }
 
     #[test]
-    fn it_should_parse_bond_quotes() {
+    fn it_should_parse_a_bond_quote_with_a_fraction() {
         let expected = 103.792968750;
         let result = parse("103-253", Style::default()).unwrap();
         assert_eq!(result, expected);
     }
 
+    #[test]
+    fn it_should_parse_a_bond_future_quote() {
+        let expected = 126.78125;
+        let result = parse("126'25", Style::default()).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn it_should_parse_a_ten_year_future_note() {
+        let expected = 111.359375;
+        let result = parse("111'11'5", Style::default()).unwrap();
+        assert_eq!(result, expected);
+    }
 }
