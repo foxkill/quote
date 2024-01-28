@@ -18,6 +18,11 @@ use self::styleparsers::*;
 // Use ParseError from Error module.
 use crate::error::ParseError;
 
+const FRACTION_BOND: [f64; 8]= [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+const FRACTION_SHORT_TERM_NOTE: [f64; 9]= [0.0, 0.125, 0.25, 0.375, 0.5, 0.5, 0.625, 0.75, 0.875];
+//--------------------------------0----1----2-----3----4---5-----6----7--
+const FRACTION_NOTE: [f64; 8] = [0.0, 0.0, 0.25, 0.0, 0.5, 0.5, 0.0, 0.75];
+
 // consider using lazy_regex::regex; Consider lazy regex insted of lazy_static?
 
 lazy_static! {
@@ -47,7 +52,7 @@ use quote::parser::Style;
 let s = "103-04+";
 let x = parse(s, Style::Bond).unwrap();
 
-assert_eq!(103.140625, x);
+assert_eq!(103.140625, s);
 ```
 */
 pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
@@ -77,10 +82,10 @@ pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
     };
 
     let price = match style {
-        Style::Bond => parse_treasury_price(number, fraction, fraction32),
-        Style::BondFuture => parse_bond_future_price(number, fraction, fraction32),
-        Style::NoteFuture => parse_note_future_price(number, fraction, fraction32),
-        Style::ShortNoteFuture => parse_short_term_note_future_price(number, fraction, fraction32),
+        Style::Bond => parse_quote(number, fraction, fraction32, &FRACTION_BOND),
+        Style::BondFuture => parse_quote(number, fraction, fraction32, &FRACTION_NOTE),
+        Style::NoteFuture => parse_quote(number, fraction, fraction32, &FRACTION_NOTE),
+        Style::ShortNoteFuture => parse_quote(number, fraction, fraction32, &FRACTION_SHORT_TERM_NOTE),
         _ => return Err(ParseError::InvalidStyle),
     }?;
 
@@ -138,6 +143,13 @@ mod tests {
         let expected = 103.792968750;
         let result = parse("103-253", Style::default()).unwrap();
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn it_should_should_return_an_error_with_an_invalid_fraction() {
+        let expected = Err(ParseError::InvalidFraction32);
+        let result = parse("103'25'9", Style::NoteFuture);
+        assert_eq!(expected, result);
     }
 
     #[test]

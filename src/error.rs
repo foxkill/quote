@@ -6,6 +6,7 @@ pub enum ParseError {
     InvalidQuote,
     InvalidNumber,
     InvalidFraction,
+    InvalidFraction32,
     InvalidStyle,
 }
 

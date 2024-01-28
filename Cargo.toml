@@ -11,4 +11,5 @@ lazy_static = "1.4.0"
 
 [lib]
 name="quote"
-crate-type=["cdylib", "lib"]
+#crate-type=["cdylib", "lib"]
+crate-type=["dylib", "lib"]
