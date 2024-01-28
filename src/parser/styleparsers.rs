@@ -17,8 +17,6 @@ pub fn parse_quote(number: &str, fraction: &str, fraction32: &str, m: &[f64]) ->
         _ => fraction32
     }.parse::<usize>().map_err(|_| ParseError::InvalidFraction32)?;
     
-    // let i = index.parse::<usize>().map_err(|_| ParseError::InvalidFraction32)?;
-
     let Some(fr32) = m.get(index) else {
         return Err(ParseError::InvalidFraction32);
     };
