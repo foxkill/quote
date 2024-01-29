@@ -4,6 +4,7 @@
 //! pub enum Stye - Enum which contains all possible kinds of parsing methods.
 //
 
+#[repr(C)]
 #[derive(Debug, PartialEq, Default)]
 pub enum Style {
     #[default]
