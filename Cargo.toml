@@ -12,4 +12,4 @@ lazy_static = "1.4.0"
 [lib]
 name="quoteparser"
 #crate-type=["cdylib", "lib"]
-crate-type=["dylib", "lib"]
+crate-type=["cdylib", "lib"]
