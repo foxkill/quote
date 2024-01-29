@@ -49,13 +49,12 @@ inside [`Err`]. The error type is specific to the implementation of the trait.
 Basic usage with [`parse`] that resturn an [`f64`] if successful.
 
 ```
-use quote::parser::parse;
-use quote::parser::Style;
+use quoteparser::prelude::*;
 
 let s = "103-04+";
-let x = parse(s, Style::Bond).unwrap();
+let quote = parse(s, Style::Bond).unwrap();
 
-assert_eq!(103.140625, s);
+assert_eq!(103.140625, quote);
 ```
 */
 pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {

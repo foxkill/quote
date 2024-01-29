@@ -2,10 +2,13 @@
 
 use std::str::FromStr;
 
-use crate::{error::ParseError, parser::{parse, Style}};
+use crate::{
+    error::ParseError,
+    parser::{parse, Style},
+};
 
 #[derive(Debug, Default, PartialEq)]
-pub struct Quote(f64); 
+pub struct Quote(f64);
 
 impl FromStr for Quote {
     type Err = ParseError;
@@ -14,22 +17,23 @@ impl FromStr for Quote {
     }
 }
 
-/// This allows to parse the string by calling the parse method directly.
-/// See the example.
+/// Parses a string into a Quote.
 ///
-/// If parsing succeeds, return the value inside [`Ok`], otherwise
-/// when the string is ill-formatted return an error specific to the
-/// inside [`Err`]. The error type is specific to the implementation of the trait.
+/// If parsing succeeds, returns the value inside `Ok`, otherwise
+/// when the string is ill-formatted, returns an error specific to
+/// the implementation of the trait.
 ///
 /// # Examples
 ///
-/// Basic usage with [`Quote`], a type that implements `FromStr`:
+/// Basic usage with `Quote`, a type that implements `FromStr`:
 ///
 /// ```
+/// use quoteparser::prelude::*;
+///
 /// let expected = 126.78125;
-/// let result: f64 = "126'25".parse::<Quote>().unwrap().into(); 
+/// let result: f64 = "126'25".parse::<Quote>().unwrap().into();
 /// assert_eq!(result, expected);
-/// ```
+/// ````
 impl From<Quote> for f64 {
     fn from(val: Quote) -> Self {
         val.0
@@ -39,13 +43,12 @@ impl From<Quote> for f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn it_should_apply_parse_on_a_str() {
         let expected = 126.78125;
-        let result: f64 = "126'25".parse::<Quote>().unwrap().into(); 
+        let result: f64 = "126'25".parse::<Quote>().unwrap().into();
         assert_eq!(result, expected);
-    } 
+    }
 
     #[test]
     fn it_should_throw_an_error_if_string_is_invalid() {
