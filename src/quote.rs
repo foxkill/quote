@@ -46,4 +46,11 @@ mod tests {
         let result: f64 = "126'25".parse::<Quote>().unwrap().into(); 
         assert_eq!(result, expected);
     } 
+
+    #[test]
+    fn it_should_throw_an_error_if_string_is_invalid() {
+        let expected: Result<_, ParseError> = Err(ParseError::InvalidQuote);
+        let result = "".parse::<Quote>();
+        assert_eq!(result, expected);
+    }
 }
