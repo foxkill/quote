@@ -5,7 +5,9 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 
+// #[cfg(feature = "cinterf")]
 pub mod cparse;
+
 mod style;
 mod macros;
 mod styleparsers;

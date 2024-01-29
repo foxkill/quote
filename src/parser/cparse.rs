@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use std::ffi::c_double;
 use std::ffi::c_char;
 use std::ffi::CStr;
@@ -5,6 +6,7 @@ use std::ffi::CStr;
 use super::parse;
 use super::Style;
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
 pub extern "C" fn cparse(s_ptr: *const c_char, style: Style) -> c_double {
     unsafe { 
