@@ -1,5 +1,7 @@
 My first rust project. A library that is able to parse treasury quotes. For example
 ```rust
+use quoteparser::prelude::*;
+
 let q = String::from("102'18'5");
 match parse(&q, Style::ShortNoteFuture) {
   Ok(quote) => println!("{} => {}", q, quote),
@@ -12,6 +14,8 @@ which prints as result: <code>102'18'5 => 102.578125.</code> This is the decimal
 
 Another way to use the parser is to directly call parse from a String/str. Like so:
 ```rust
+use quoteparser::prelude::*;
+
 let result: f64 = "102'18'5".parse::<Quote>().unwrap().into();
 
 println!("The parsed result is {}", result);
