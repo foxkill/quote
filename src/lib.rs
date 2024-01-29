@@ -1,13 +1,15 @@
 //
 //! # Quote Parser
-//! 
+//!
 //! The `quote parser` crate provides a parser for treasury future quotes.
 //
-pub mod parser;
-pub mod error;
-pub mod quote;
+mod error;
+mod parser;
+mod quote;
 
-// mod prelude {                            
-//   pub use crate::{x,y};
-// }
-// use crate::prelude::*;
+pub mod prelude {
+    pub use crate::error::ParseError;
+    pub use crate::parser::Style;
+    pub use crate::parser::parse;
+    pub use crate::quote::Quote as Quote;
+}
