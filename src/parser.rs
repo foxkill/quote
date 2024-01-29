@@ -5,7 +5,7 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 
-mod cparse;
+pub mod cparse;
 mod style;
 mod macros;
 mod styleparsers;
