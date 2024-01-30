@@ -1,40 +1,33 @@
 //! # The Quote Parser
 //! Module that contains the parse() function.
-//
-// #[allow(unused)] // for starting projects only
-use lazy_static::lazy_static;
-use regex::Regex;
+
 
 // #[cfg(feature = "cinterf")]
 pub mod cparse;
 
-mod style;
 mod macros;
+mod style;
 mod styleparsers;
 
-use crate::extract_capture;
+use macros::extract_capture;
+use macros::re;
 
 // Export Style.
 pub use self::style::Style;
 // Use all style parsers.
 use self::styleparsers::*;
 // Use ParseError from Error module.
-use crate::error::ParseError;
+use super::error::ParseError;
 
-const FRACTION_BOND: [f64; 8]= [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
-const FRACTION_SHORT_TERM_NOTE: [f64; 9]= [0.0, 0.125, 0.25, 0.375, 0.5, 0.5, 0.625, 0.75, 0.875];
+const FRACTION_BOND: [f64; 8] = [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+const FRACTION_SHORT_TERM_NOTE: [f64; 9] = [0.0, 0.125, 0.25, 0.375, 0.5, 0.5, 0.625, 0.75, 0.875];
 //--------------------------------0----1----2-----3----4---5-----6----7--
 const FRACTION_NOTE: [f64; 8] = [0.0, 0.0, 0.25, 0.0, 0.5, 0.5, 0.0, 0.75];
 
-// consider using lazy_regex::regex; Consider lazy regex insted of lazy_static?
-
-lazy_static! {
-    static ref QUOTE_EXPRESSION_RE: Regex = Regex::new(concat!(
-        r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
-        r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
-    ))
-    .unwrap();
-}
+const RE: &str = concat!(
+    r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
+    r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
+);
 
 /**
 This function allow to parse tresury bond quotes and treasury
@@ -64,7 +57,7 @@ pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
     };
 
     // Guard
-    let Some(captures) = QUOTE_EXPRESSION_RE.captures(s) else {
+    let Some(captures) = re!(RE).captures(s) else {
         return Err(ParseError::InvalidQuote);
     };
 
@@ -87,7 +80,9 @@ pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
         Style::Bond => parse_quote(number, fraction, fraction32, &FRACTION_BOND),
         Style::BondFuture => parse_quote(number, fraction, fraction32, &FRACTION_NOTE),
         Style::NoteFuture => parse_quote(number, fraction, fraction32, &FRACTION_NOTE),
-        Style::ShortNoteFuture => parse_quote(number, fraction, fraction32, &FRACTION_SHORT_TERM_NOTE),
+        Style::ShortNoteFuture => {
+            parse_quote(number, fraction, fraction32, &FRACTION_SHORT_TERM_NOTE)
+        }
         _ => return Err(ParseError::InvalidStyle),
     }?;
 
@@ -137,6 +132,7 @@ mod tests {
     fn it_should_parse_short_term_note_future_quotes() {
         let expected = 102.578125;
         let result = parse("102'18'5", Style::ShortNoteFuture).unwrap();
+        let _ = parse("102'18'5", Style::ShortNoteFuture).unwrap();
         assert_eq!(result, expected);
     }
 
