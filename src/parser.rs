@@ -132,7 +132,6 @@ mod tests {
     fn it_should_parse_short_term_note_future_quotes() {
         let expected = 102.578125;
         let result = parse("102'18'5", Style::ShortNoteFuture).unwrap();
-        let _ = parse("102'18'5", Style::ShortNoteFuture).unwrap();
         assert_eq!(result, expected);
     }
 
