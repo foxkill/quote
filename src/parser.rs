@@ -1,7 +1,6 @@
 //! # The Quote Parser
 //! Module that contains the parse() function.
 
-
 // #[cfg(feature = "cinterf")]
 pub mod cparse;
 

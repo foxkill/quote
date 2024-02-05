@@ -40,6 +40,12 @@ impl From<Quote> for f64 {
     }
 }
 
+impl From<&str> for Quote {
+    fn from(value: &str) -> Self {
+        value.parse().unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,13 +53,20 @@ mod tests {
     fn it_should_apply_parse_on_a_str() {
         let expected = 126.78125;
         let result: f64 = "126'25".parse::<Quote>().unwrap().into();
-        assert_eq!(result, expected);
+        assert_eq!(expected, result);
     }
 
     #[test]
     fn it_should_throw_an_error_if_string_is_invalid() {
         let expected: Result<_, ParseError> = Err(ParseError::InvalidQuote);
         let result = "".parse::<Quote>();
-        assert_eq!(result, expected);
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn from() {
+        let result: f64 = Quote::from("126'25").into();
+        // dbg!(q);
+        assert_eq!(126.78125, result);
     }
 }
