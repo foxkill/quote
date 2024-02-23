@@ -5,7 +5,7 @@
 //
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq, Default, Copy, Clone)]
 pub enum Style {
     #[default]
     Detect,
