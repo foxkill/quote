@@ -65,14 +65,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_apply_parse_on_a_string() {
-        let expected = 126.78125;
-        let quote: Quote = "126'25".parse().unwrap();
-        let result: f64 = quote.into();
-        assert_eq!(expected, result);
-    }
-
-    #[test]
     fn it_should_throw_an_error_if_string_is_invalid() {
         let expected: Result<_, ParseError> = Err(ParseError::InvalidQuote);
         let result = "".parse::<Quote>();
@@ -80,8 +72,21 @@ mod tests {
     }
 
     #[test]
-    fn it_shoud_support_the_from_trait() {
+    fn it_should_support_the_from_trait() {
         let result: f64 = Quote::from("126'25").into();
         assert_eq!(126.78125, result);
+    }
+
+    #[test]
+    fn it_should_parse_a_float_value() {
+        let result = parse("123.45", Style::Bond).unwrap();
+        let expected = 123.45;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn it_should_detect_an_invalid_quote() {
+        let parsed_price = parse("126'32", Style::Bond);
+        assert!(parsed_price.is_err());
     }
 }
