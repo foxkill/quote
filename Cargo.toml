@@ -14,5 +14,4 @@ regex = "1.10.2"
 
 [lib]
 name="quoteparser"
-#crate-type=["cdylib", "lib"]
 crate-type=["cdylib", "lib"]
