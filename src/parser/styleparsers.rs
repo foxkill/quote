@@ -13,7 +13,7 @@ pub fn parse_quote(number: &str, fraction: &str, fraction32: &str, m: &[f64]) ->
 
     let index = match fraction32 {
         s if s.starts_with('+') => "4",
-        s if s.is_empty() => "0",
+        "" => "0",
         _ => fraction32
     }.parse::<usize>().map_err(|_| ParseError::InvalidFraction32)?;
     
