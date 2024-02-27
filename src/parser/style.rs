@@ -4,6 +4,8 @@
 //! pub enum Stye - Enum which contains all possible kinds of parsing methods.
 //
 
+use std::fmt;
+
 #[repr(C)]
 #[derive(Debug, PartialEq, Default, Copy, Clone)]
 pub enum Style {
@@ -14,6 +16,19 @@ pub enum Style {
     ShortNoteFuture,
     NoteFuture,
     BondFuture,
+}
+
+impl fmt::Display for Style {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Style::Detect => write!(f, "Detect style of the quote"),
+            Style::Decimal => write!(f, "Parse a decimal number"),
+            Style::Bond => write!(f, "Bond"),
+            Style::ShortNoteFuture => write!(f, "Short Note Future (2yr, 3yr, 5yr, 7yr)"),
+            Style::NoteFuture => write!(f, "Note Future (10yr+)"),
+            Style::BondFuture => write!(f, "Bond Future (20yr, 30yr)"),
+        }
+    }
 }
 
 impl Style {
