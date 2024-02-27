@@ -25,7 +25,7 @@ const FRACTION_NOTE: [f64; 8] = [0.0, 0.0, 0.25, 0.0, 0.5, 0.5, 0.0, 0.75];
 
 const RE: &str = concat!(
     r"(?P<number>^\d+)(?P<delimiter_frac>[\.\-\'])?",
-    r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>[\d+,\+])?"
+    r"(?P<fraction>\d{2})?(?P<delimiter32>\'?)(?P<fraction32>\d+|\+)?"
 );
 
 /**
@@ -50,7 +50,7 @@ assert_eq!(103.140625, quote);
 ```
 */
 pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
-    // First try parse a simple float.
+    // First try to parse a simple float.
     if let Ok(price) = s.parse::<f64>() {
         return Ok(price);
     };
@@ -159,6 +159,13 @@ mod tests {
     fn it_should_parse_a_ten_year_future_note() {
         let expected = 111.359375;
         let result = parse("111'11'5", Style::default()).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn it_should_parse_a_quote_with_an_invalid_null_prefix_in_fraction32() {
+        let result = parse("123'04'05", Style::default()).unwrap();
+        let expected = parse("123'04'5", Style::NoteFuture).unwrap();
         assert_eq!(result, expected);
     }
 }
