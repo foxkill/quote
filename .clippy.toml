@@ -1,0 +1,4 @@
+pedantic = true
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+

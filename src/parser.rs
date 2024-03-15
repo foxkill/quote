@@ -79,9 +79,7 @@ pub fn parse(s: &str, quotestyle: Style) -> Result<f64, ParseError> {
         Style::Bond => parse_quote(number, fraction, fraction32, &FRACTION_BOND),
         Style::BondFuture => parse_quote(number, fraction, fraction32, &FRACTION_NOTE),
         Style::NoteFuture => parse_quote(number, fraction, fraction32, &FRACTION_NOTE),
-        Style::ShortNoteFuture => {
-            parse_quote(number, fraction, fraction32, &FRACTION_SHORT_TERM_NOTE)
-        }
+        Style::ShortNoteFuture => parse_quote(number, fraction, fraction32, &FRACTION_SHORT_TERM_NOTE)
         _ => return Err(ParseError::InvalidStyle),
     }?;
 
